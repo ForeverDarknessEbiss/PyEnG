@@ -10,7 +10,7 @@ class AggressiveMonster(Monster):
             height=40,
             color=(200, 0, 0),
             speed=80, # скорость
-            max_hp=120, # макс хп
+            max_hp=12, # макс хп
             resistances={
                 "physical": 10,
                 "chemical": 5,

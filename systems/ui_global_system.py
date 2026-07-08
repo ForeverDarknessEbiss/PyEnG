@@ -230,74 +230,6 @@ class WeaponCarousel:
         text_rect = text_surf.get_rect(center=(self.hp_x + self.hp_width // 2, 
                                                 self.hp_y -10))
         screen.blit(text_surf, text_rect)
-    
-    def draw_energy_bar(self, screen, player):
-        """Отрисовка полоски энергии"""
-        if player.max_energy <= 0:
-            return
-        
-        # Процент энергии
-        percent = player.energy / player.max_energy
-        current_width = int(self.energy_width * percent)
-        
-        # Полоска
-        pygame.draw.rect(screen, self.energy_color, 
-                        (self.energy_x, self.energy_y, current_width, self.energy_height))
-        
-        # Текст (энергия)
-        text = f"{int(player.energy)}/{int(player.max_energy)}"
-        text_surf = self.font.render(text, True, self.font_color)
-        text_rect = text_surf.get_rect(center=(self.energy_x + self.energy_width // 2, 
-                                                self.energy_y - 10))
-        screen.blit(text_surf, text_rect)
-
-    def _draw_energy_tooltip(self, screen, player, mouse_x, mouse_y):
-        """Отрисовка тултипа с информацией о энергии"""
-        # Проверяем, наведена ли мышь на полоску энергии
-        energy_rect = pygame.Rect(self.energy_x, self.energy_y, self.energy_width, self.energy_height)
-        if not energy_rect.collidepoint(mouse_x, mouse_y):
-            return
-        
-        stats = player.get_combat_stats()
-        regen_bonus = stats.get("energy_regen", 0)  # от конечностей
-        constant_drain = stats.get("constant_energy_drain", 0)  # от имплантов
-        consumption = stats.get("energy_consumption", 0)  # энергоэффективность (%)
-        movement_cost = 1  # расход при движении
-        
-        # Расчет выработки и расхода
-        base_regen = regen_bonus
-        stand_bonus = 0
-        if player.dx == 0 and player.dy == 0:
-            stand_bonus = int(base_regen * 0.2)  # 20% бонус
-        
-        total_regen = base_regen + stand_bonus
-        total_drain = constant_drain
-        
-        # Тултип
-        font = pygame.font.Font(None, 20)
-        x, y = mouse_x + 15, mouse_y - 120
-        width = 220
-        height = 120
-        line_height = 22
-        
-        # Фон
-        pygame.draw.rect(screen, (30, 30, 30), (x, y, width, height))
-        pygame.draw.rect(screen, (100, 100, 100), (x, y, width, height), 1)
-        
-        lines = [
-            f"⚡ Выработка: +{total_regen}/c",
-            f"   ├─ Базовая: +{base_regen}/c",
-            f"   └─ Бонус стояния: +{stand_bonus}/c",
-            f"🔋 Расход: -{total_drain}/c",
-            f"🏃 Движение: -{movement_cost}/c",
-        ]
-        
-        if consumption != 0:
-            lines.append(f"📊 Эффективность: {consumption:+}%")
-        
-        for i, line in enumerate(lines):
-            text = font.render(line, True, (220, 220, 220))
-            screen.blit(text, (x + 8, y + 5 + i * line_height))
 
     def _draw_hp_tooltip(self, screen, player, mouse_x, mouse_y):
         """Отрисовка тултипа с информацией о здоровье конечностей"""
@@ -309,17 +241,17 @@ class WeaponCarousel:
         width = 220
         line_height = 20
         
-        # Получаем статус конечностей из limb_health
+        # Получаем статус конечностей из limb_health_system
         limbs_status = []
-        for limb_id, limb in player.limb_health.limbs.items():
+        for limb_id, limb in player.limb_health_system.limbs.items():
             limbs_status.append({
-                "name": limb["name"],
-                "current": limb["current_hp"],
-                "max": limb["max_hp"],
-                "broken": limb["is_broken"]
+                "name": limb.name,
+                "current": limb.hp,
+                "max": limb.max_hp,
+                "broken": limb.is_destroyed()
             })
         
-        # Вычисляем высоту окна (заголовок + 5 конечностей)
+        # Вычисляем высоту окна (заголовок + конечности)
         height = 30 + len(limbs_status) * line_height
         
         x = mouse_x + 15
@@ -337,13 +269,10 @@ class WeaponCarousel:
         y_offset = y + 25
         for limb in limbs_status:
             if limb["broken"]:
-                # Сломаная конечность - красный текст
                 color = (255, 100, 100)
                 text = font.render(f"{limb['name']}: 💀 Сломана", True, color)
             else:
-                # Целая конечность - белый/серый текст
                 color = (200, 200, 200)
-                # Показываем текущее/максимальное здоровье
                 bar_len = int(10 * limb["current"] / limb["max"])
                 bar = "█" * bar_len + "░" * (10 - bar_len)
                 text = font.render(f"{limb['name']}: {limb['current']}/{limb['max']} [{bar}]", True, color)
@@ -408,11 +337,9 @@ class WeaponCarousel:
         
         # Рисуем полоски
         self.draw_hp_bar(screen, player)
-        self.draw_energy_bar(screen, player)
 
         # 🆕 Рисуем тултип 
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        self._draw_energy_tooltip(screen, player, mouse_x, mouse_y)
         self._draw_hp_tooltip(screen, player, mouse_x, mouse_y)
         self.implant_indicators.draw(screen, player)
         self.draw_character_icon(screen, player)

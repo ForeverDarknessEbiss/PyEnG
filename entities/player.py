@@ -26,7 +26,7 @@ class Player(Entity):
         self.inventory = Inventory(size)
         self.inventory_open = False
         self.defense = DefenseStats(self)  # 🛡️ Система защиты - ДО equipment!
-        self.equipment = EquipmentSystem(self)
+        self.equipment = EquipmentSystem()
         self.active_weapon_slot = "weapon_primary"
         self.equipment.equip(create_weapon("rifle"), "weapon_primary")
         self.last_dx = 1
@@ -45,11 +45,7 @@ class Player(Entity):
         
         self.health = 0
         self.max_health = 0
-        self.radial_menu = None
-        # ⚡ Энергия
-        self.energy = 100
-        self.max_energy = 100
-        
+        self.radial_menu = None    
         
         # ☢️ Радиация
         self.radiation = 0
@@ -57,54 +53,34 @@ class Player(Entity):
         self.radiation_damage_tick = 0
         
         # 🦿 Дефолтные конечности
+        self.limb_health_system = LimbHealthSystem()
         self._equip_default_limbs()
-        self.limb_health = LimbHealthSystem(self)
+        self.equipment.update_slots_from_limbs(self.limb_health_system)
     
     def _equip_default_limbs(self):
-        """Экипирует стандартные конечности"""
-        from loot.limbs.limb_factory import create_limb
+        """Экипирует стандартные конечности из БД"""
+        from loot.limbs_database import LimbsDatabase
+        from loot.limbs.limb_factory import LimbFactory
         
-        default_limbs = {
-            "limbs_head": "basic_head",
-            "limbs_hand_left": "basic_hand_left",
-            "limbs_hand_right": "basic_hand_right",
-            "limbs_leg_left": "basic_leg_left",
-            "limbs_leg_right": "basic_leg_right"
+        db = LimbsDatabase()
+        factory = LimbFactory(db)
+        
+        # ID конечностей из БД (подгони под свои)
+        default_limb_ids = {
+            "limbs_head": 1,        # ID головы в БД
+            "limbs_hand_left": 2,   # ID левой руки
+            "limbs_hand_right": 3,  # ID правой руки
+            "limbs_leg_left": 4,    # ID левой ноги
+            "limbs_leg_right": 5,   # ID правой ноги
         }
         
-        for slot, limb_id in default_limbs.items():
-            limb = create_limb(limb_id)
-            self.equipment.equip(limb, slot)
-
-    def update_energy(self, delta_time):
-        stats = self.get_combat_stats()
-        regen_bonus = stats.get("energy_regen", 0)
-        consumption = stats.get("energy_consumption", 0)
-        constant_drain = stats.get("constant_energy_drain", 0)
+        for slot, limb_id in default_limb_ids.items():
+            limb = factory.create(limb_id)
+            if limb:
+                self.limb_health_system.add_limb(limb)
+                self.equipment.slots[slot] = limb
         
-        # Базовая регенерация + бонус от конечностей
-        regen = regen_bonus
-        
-        # 🆕 Бонус за стояние (до вычитания drain)
-        if self.dx == 0 and self.dy == 0:
-            regen *= 1.2
-        
-        # Вычитаем постоянный расход от имплантов
-        regen -= constant_drain
-        
-        # Применяем эффект энергоэффективности
-        regen = regen * (100 - consumption) / 100
-        
-        self.energy += regen * delta_time
-        self.energy = max(0, min(self.max_energy, self.energy))
-
-
-    def use_energy(self, amount):
-        """Потратить энергию (возвращает True если хватило)"""
-        if self.energy >= amount:
-            self.energy -= amount
-            return True
-        return False
+        db.close()
 
     @property
     def weapon(self):
@@ -127,9 +103,6 @@ class Player(Entity):
         print(f"  🔰 Сопротивление:       {stats.get('resistance', 0)}")
         print("\n[ЗАЩИТА]")
         print(f"  🔴 Физическая защита:   {stats.get('physical_defense', 0)}")
-        print(f"  🟢 Химическая защита:   {stats.get('chemical_defense', 0)}")
-        print(f"  🟡 Электрическая защита: {stats.get('electric_defense', 0)}")
-        print(f"  🔶 Огненная защита:     {stats.get('fire_defense', 0)}")
         print("="*60 + "\n")
 
 
@@ -164,14 +137,7 @@ class Player(Entity):
         # 4. Обновляем позицию через movement system
         dx, dy = self.movement.update_player(game_map, self.speed, delta_time, speed_bonus)
         
-        # 5. Расход энергии при движении
-        if dx != 0 or dy != 0:
-            movement_cost = 1
-            self.energy -= movement_cost * delta_time
-            self.energy = max(0, self.energy)
-        
-        # 6. Обновление энергии
-        self.update_energy(delta_time)
+
         
         # 7. Обновление имплантов
         self.implant_manager.update(delta_time)

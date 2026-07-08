@@ -127,10 +127,9 @@ class LootSystem:
 
 
     def generate_loot(self, monster):
-        # Создаем локальный генератор
         import random
         rng = random.Random()
-        rng.seed()  # автоматический seed
+        rng.seed()
         
         preset_name = getattr(monster, "loot_preset", None)
         preset = self.presets.get(preset_name)
@@ -144,13 +143,11 @@ class LootSystem:
 
         drop = []
 
-        # --- используем rng вместо random ---
         num_types = rng.randint(1, 10)
         pool = items + rare
         chosen = rng.sample(pool, min(num_types, len(pool)))
 
         for item_data in chosen:
-            # --- ОБРАБОТКА КОРТЕЖЕЙ (оружие, броня, артефакты, импланты, конечности) ---
             if isinstance(item_data, tuple):
                 item_type = item_data[0]
                 item_id = item_data[1]
@@ -168,15 +165,25 @@ class LootSystem:
                     from loot.implants.implant_factory import create_implant
                     item = create_implant(item_id)
                 elif item_type == "limb":
-                    from loot.limbs.limb_factory import create_limb
-                    item = create_limb(item_id)                    
+                    from loot.limbs_database import LimbsDatabase
+                    from loot.limbs.limb_factory import LimbFactory
+                    db = LimbsDatabase()
+                    factory = LimbFactory(db)
+                    # Пробуем числовой ID, если не вышло — ищем по имени
+                    if isinstance(item_id, int):
+                        item = factory.create(item_id)
+                    else:
+                        row = db.fetch_by_name(item_id)
+                        if row:
+                            item = factory.create(row[0])
+                        else:
+                            item = None
                 else:
                     continue
                     
                 drop.append((item, 1))
                 continue
 
-            # --- ОБЫЧНЫЕ ПРЕДМЕТЫ (LootItem, Ammo и т.д.) ---
             if getattr(item_data, "is_unique", False):
                 amount = 1
             else:
@@ -187,38 +194,51 @@ class LootSystem:
             drop.append((item_data, amount))
 
         return drop
-    
+
+
     def spawn_item(self, item, amount, x, y):
         import random
         import uuid
-        # Распаковка кортежа (если это кортеж)
+        
         if isinstance(item, tuple):
             item_type = item[0]
             item_data = item[1]
             
             if item_type == "weapon":
                 from loot.weapons.weapon_factory import create_weapon
-                item = create_weapon(item_data)
+                base_item = create_weapon(item_data)
             elif item_type == "armor":
                 from loot.equipments.armor_factory import create_equipments
-                item = create_equipments(item_data)
+                base_item = create_equipments(item_data)
             elif item_type == "implant":
                 from loot.implants.implant_factory import create_implant
-                item = create_implant(item_data)
+                base_item = create_implant(item_data)
             elif item_type == "limb":
-                from loot.limbs.limb_factory import create_limb
-                item = create_limb(item_data)
-            # для обычных предметов (если кортеж, но не weapon/armor)
+                from loot.limbs_database import LimbsDatabase
+                from loot.limbs.limb_factory import LimbFactory
+                db = LimbsDatabase()
+                factory = LimbFactory(db)
+                if isinstance(item_data, int):
+                    base_item = factory.create(item_data)
+                else:
+                    row = db.fetch_by_name(item_data)
+                    if row:
+                        base_item = factory.create(row[0])
+                    else:
+                        base_item = None
             else:
                 base_item = item_data
         else:
             base_item = item
 
+        # Если не удалось создать предмет — выходим
+        if base_item is None:
+            print(f"[LootSystem] ❌ Не удалось создать предмет: {item}")
+            return
+
         for _ in range(amount):
-            # Копируем предмет
             import copy
             new_item = copy.deepcopy(base_item)
-            # Генерируем новый uid
             new_item.uid = str(uuid.uuid4())
             
             entity = ItemEntity(x, y, new_item, 1)

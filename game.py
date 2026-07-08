@@ -5,7 +5,6 @@ from camera import Camera
 from entities import Player #
 from map import GameMap
 from managers.monster_manager import MonsterManager
-from joystick import Joystick
 # --- монстры , решить проблему огромного количества импортов 
 from entities.monsters.aggressive import AggressiveMonster
 from entities.monsters.ratte import RatteMonster
@@ -63,7 +62,7 @@ def main():
 
     #камеру перенес в самый вверх под init
     game_map = GameMap()  # Предполагается, что у тебя есть класс карты
-    joystick = Joystick(x=100, y=SCREEN_HEIGHT - 100, size=80)
+
     
     player.game_map = game_map
     player.monster_manager = monster_manager
@@ -72,27 +71,10 @@ def main():
 
     # Пример спавна монстров№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№№
     monster_manager.spawn_monster(AggressiveMonster(x=200, y=200))
-    monster_manager.spawn_monster(AggressiveMonster(x=300, y=200))
-    monster_manager.spawn_monster(RatteMonster(x=600, y=400))
-    monster_manager.spawn_monster(PoogaloMonster(x=500, y=500))
-    monster_manager.spawn_monster(SoldierMonster(x=400, y=500))
-    monster_manager.spawn_monster(HeavyMonster(x=600, y=600))
-    monster_manager.spawn_monster(ScoutMonster(x=700, y=700))
-    monster_manager.spawn_monster(DogbotMonster(x=750, y=800))
-    monster_manager.spawn_monster(DogbotMonster(x=770, y=800))
-    monster_manager.spawn_monster(DogbotMonster(x=790, y=800))
-    monster_manager.spawn_monster(DogbotMonster(x=810, y=800))
-    monster_manager.spawn_monster(DogbotMonster(x=830, y=800))
+
     
     running = True
 
-    #пример спавна оружия 
-    test_implant = create_implant("dash_implant")
-    test_implant_emp = create_implant("radar_implant")
-    test_implant_energy_blades = create_implant("energy_blades")
-    loot_system.spawn_item(test_implant, 1, x=50, y=50)
-    loot_system.spawn_item(test_implant_energy_blades, 1, x=100, y=100)
-    loot_system.spawn_item(test_implant_emp, 1, x=60, y=60)
 
     # Тестовые объекты для дебага
     interactive_manager.spawn("chest", "test_chest_01", player.x + 80, player.y, {
@@ -241,7 +223,6 @@ def main():
         # =========================
         player.handle_input(keys)
         player.update(game_map, None, delta_time)
-        player.update_energy(delta_time)
         # =========================
         #  4. пКМ УДЕРЖАНИЕ
         # =========================

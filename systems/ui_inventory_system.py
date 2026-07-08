@@ -1,12 +1,11 @@
 import pygame
-from systems.inventory_system import INVENTORY_CONFIG
+from systems.inventory_config import INVENTORY_CONFIG
 
 
 
         # МЕТОД ОТРИСОВКИ ИНВЕНТАРЯ 
 def draw_inventory(screen, inventory, active_equipment_layer=None):
-
-
+    
     config = INVENTORY_CONFIG
     font = pygame.font.SysFont(None, 24)
 
@@ -98,7 +97,7 @@ def draw_inventory(screen, inventory, active_equipment_layer=None):
     return hovered_slot, "inventory"
 
 def draw_equipment(screen, player, active_equipment_layer):
-    from systems.inventory_system import INVENTORY_CONFIG
+
     config = INVENTORY_CONFIG
     
     font = pygame.font.SysFont(None, 24)
@@ -139,6 +138,7 @@ def draw_equipment(screen, player, active_equipment_layer):
         draw_tooltip(screen, hovered_item, config)
 
 def check_equipment_hover(mouse_x, mouse_y, active_layer):
+
     config = INVENTORY_CONFIG
     slots = config["layers"][active_layer]
     positions = config["slot_positions"]
@@ -153,7 +153,7 @@ def check_equipment_hover(mouse_x, mouse_y, active_layer):
     return None
 
 def draw_equipment_tabs(screen, active_layer):
-    from systems.inventory_system import INVENTORY_CONFIG
+
     
     config = INVENTORY_CONFIG
     font = pygame.font.SysFont(None, 24)
@@ -195,6 +195,7 @@ def draw_equipment_tabs(screen, active_layer):
 def draw_tooltip(screen, data, config):
     font_title = pygame.font.SysFont(None, 28)
     font_text = pygame.font.SysFont(None, 22)
+
     config = INVENTORY_CONFIG
     # mouse_x, mouse_y = pygame.mouse.get_pos() 
 
@@ -394,6 +395,8 @@ def _draw_bonus_bar(screen, x, y, width, name, total, layer, color):
 
 def _get_layer_stats(player, active_equipment_layer):
     """Получить статы от текущего слоя (вкладки)"""
+    from systems.inventory_system import INVENTORY_CONFIG
+
     layer_stats = {}
     
     # Получаем список слотов для текущей вкладки
