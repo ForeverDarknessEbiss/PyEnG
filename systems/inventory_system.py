@@ -66,7 +66,12 @@ class Inventory:
         target_slot = force_slot
         if not target_slot:
             if isinstance(item, Weapon):
-                weapon_slots = ["weapon_primary", "weapon_secondary"]
+                # Собираем все доступные оружейные слоты из equipment
+                weapon_slots = [sid for sid in player.equipment.slots if sid.startswith("weapon_")]
+                # Сортируем: сначала пустые, потом занятые
+                empty = [s for s in weapon_slots if player.equipment.slots.get(s) is None]
+                filled = [s for s in weapon_slots if player.equipment.slots.get(s) is not None]
+                weapon_slots = empty + filled
                 for slot in weapon_slots:
                     if player.equipment.slots.get(slot) is None:
                         target_slot = slot
@@ -83,14 +88,16 @@ class Inventory:
         old_item = None
         if current_item:
             old_item = player.equipment.unequip(target_slot)
-        success = player.equipment.equip(item, target_slot)
+        print(f"[DEBUG] target_slot={target_slot}, exists={target_slot in player.equipment.slots}")
+        success = player.equipment.equip(target_slot, item)
+        print(f"[DEBUG] equip success={success}")
         if success:
             self.slots[slot_index] = None
             if old_item:
                 self.add_item(old_item, 1)
             return True
         if old_item:
-            player.equipment.equip(old_item, target_slot)
+            player.equipment.equip( target_slot, old_item)
         return False
 
     def unequip_item(self, item, player):

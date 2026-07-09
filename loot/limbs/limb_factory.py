@@ -34,18 +34,3 @@ class LimbFactory:
             slot_count=slot_count
         )
     
-    def create_all_of_type(self, limb_type: str) -> list[Limb]:
-        """Создаёт все конечности заданного типа (например, все левые руки)"""
-        rows = self.db.fetch_by_type(limb_type)
-        limbs = []
-        for row in rows:
-            limb_id, name, _, hp, slot_type, slot_count = row
-            limbs.append(Limb(
-                limb_id=limb_id,
-                name=name,
-                limb_type=limb_type,
-                hp=hp,
-                slot_type=slot_type,
-                slot_count=slot_count
-            ))
-        return limbs

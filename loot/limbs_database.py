@@ -11,7 +11,7 @@ LIMBS_DATA = {
         "limb_type": "head",
         "hp": 20,
         "slot_type": None,
-        "slot_count": 0,
+        "slot_count": 0
     },
     
     # ===== ЛЕВАЯ РУКА =====
@@ -21,7 +21,7 @@ LIMBS_DATA = {
         "limb_type": "left_arm",
         "hp": 15,
         "slot_type": "weapon_left",
-        "slot_count": 1,
+        "slot_count": 1
     },
     3: {
         "id": 3,
@@ -29,7 +29,7 @@ LIMBS_DATA = {
         "limb_type": "left_arm",
         "hp": 25,
         "slot_type": "weapon_left",
-        "slot_count": 2,
+        "slot_count": 2
     },
     4: {
         "id": 4,
@@ -37,7 +37,7 @@ LIMBS_DATA = {
         "limb_type": "left_arm",
         "hp": 35,
         "slot_type": "weapon_left",
-        "slot_count": 3,
+        "slot_count": 3
     },
     
     # ===== ПРАВАЯ РУКА =====
@@ -47,7 +47,7 @@ LIMBS_DATA = {
         "limb_type": "right_arm",
         "hp": 15,
         "slot_type": "weapon_right",
-        "slot_count": 1,
+        "slot_count": 1
     },
     6: {
         "id": 6,
@@ -55,7 +55,7 @@ LIMBS_DATA = {
         "limb_type": "right_arm",
         "hp": 25,
         "slot_type": "weapon_right",
-        "slot_count": 2,
+        "slot_count": 2
     },
     7: {
         "id": 7,
@@ -63,7 +63,7 @@ LIMBS_DATA = {
         "limb_type": "right_arm",
         "hp": 35,
         "slot_type": "weapon_right",
-        "slot_count": 3,
+        "slot_count": 3
     },
     
     # ===== ЛЕВАЯ НОГА =====
@@ -73,7 +73,7 @@ LIMBS_DATA = {
         "limb_type": "left_leg",
         "hp": 20,
         "slot_type": None,
-        "slot_count": 0,
+        "slot_count": 0
     },
     
     # ===== ПРАВАЯ НОГА =====
@@ -83,7 +83,7 @@ LIMBS_DATA = {
         "limb_type": "right_leg",
         "hp": 20,
         "slot_type": None,
-        "slot_count": 0,
+        "slot_count": 0
     },
 
     # ===== РЕДКИЕ КОНЕЧНОСТИ (заглушки) =====
@@ -93,7 +93,7 @@ LIMBS_DATA = {
         "limb_type": "left_arm",
         "hp": 30,
         "slot_type": "weapon_left",
-        "slot_count": 2,
+        "slot_count": 2
     },
     11: {
         "id": 11,
@@ -101,7 +101,7 @@ LIMBS_DATA = {
         "limb_type": "right_arm",
         "hp": 30,
         "slot_type": "weapon_right",
-        "slot_count": 2,
+        "slot_count": 2
     },
     12: {
         "id": 12,
@@ -109,7 +109,7 @@ LIMBS_DATA = {
         "limb_type": "left_leg",
         "hp": 25,
         "slot_type": None,
-        "slot_count": 0,
+        "slot_count": 2
     },
     13: {
         "id": 13,
@@ -117,7 +117,8 @@ LIMBS_DATA = {
         "limb_type": "right_leg",
         "hp": 25,
         "slot_type": None,
-        "slot_count": 0,}
+        "slot_count": 2
+        }
 
     }
 

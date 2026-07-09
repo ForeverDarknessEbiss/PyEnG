@@ -40,59 +40,53 @@ class Weapon:
     def attack(self, player, combat_system):
         combat_system.handle_attack(player, self)
 
-    def get_actions(self, player, slot_data=None, slot_type="inventory"):
-            actions = []
-
-            # 🎯 Доступные слоты
+    def get_actions(self, player, slot_data, slot_type):
+        """Возвращает список действий для контекстного меню (ПКМ)"""
+        actions = []
+        
+        if slot_type == "inventory":
+            # Собираем все реальные оружейные слоты
+            weapon_slots = [sid for sid in player.equipment.slots if sid.startswith("weapon_")]
+            
             if self.weapon_type == "melee":
-                self.available_slots = ["weapon_melee"]
-            elif self.weapon_type == "ranged":
-                self.available_slots = ["weapon_primary", "weapon_secondary"]
-            else:
-                self.available_slots = []
-                
-            # Проверяем, надет ли предмет (по uid)
-            equipped_slot = None
-            for slot, item in player.equipment.slots.items():
-                if item and hasattr(item, 'uid') and item.uid == self.uid:
-                    equipped_slot = slot
-                    break
-
-            if slot_type == "inventory":
-                if equipped_slot:
+                # melee — только melee-слоты
+                melee_slots = [s for s in weapon_slots if "melee" in s]
+                for slot_id in melee_slots:
                     actions.append({
-                        "name": "Снять",
-                        "action": lambda: player.inventory.unequip_item(self, player)
+                        "name": f"Экипировать ({slot_id})",
+                        "action": lambda sid=slot_id: player.inventory.equip_from_slot(
+                            player.inventory.slots.index(
+                                next(s for s in player.inventory.slots if s and s.item == self)
+                            ),
+                            player,
+                            sid
+                        )
                     })
-                else:
-                    # Показываем только подходящие слоты
-                    for slot in self.available_slots:
-                        current_item = player.equipment.slots.get(slot)
-                        if current_item:
-                            action_name = f"Заменить в {slot} (сейчас {current_item.name})"
-                        else:
-                            action_name = f"Экипировать в {slot}"
-                        
-                        actions.append({
-                            "name": action_name,
-                            "action": lambda s=slot: player.inventory.equip_from_slot(
-                                slot_data, player, force_slot=s
-                            )
-                        })
-                
-                actions.append({
-                    "name": "Выбросить",
-                    "action": lambda: player.drop_item_by_reference(self)
-                })
-                
-            elif slot_type == "equipment":
-                actions.append({
-                    "name": "Снять",
-                    "action": lambda: player.inventory.unequip_item(self, player)
-                })
-                actions.append({
-                    "name": "Выбросить",
-                    "action": lambda: player.drop_equipped_item(self)
-                })
-
-            return actions
+            else:
+                # ВСЕ оружейные слоты (кроме melee)
+                ranged_slots = [s for s in weapon_slots if "melee" not in s]
+                for slot_id in ranged_slots:
+                    actions.append({
+                        "name": f"Экипировать ({slot_id})",
+                        "action": lambda sid=slot_id: player.inventory.equip_from_slot(
+                            player.inventory.slots.index(
+                                next(s for s in player.inventory.slots if s and s.item == self)
+                            ),
+                            player,
+                            sid
+                        )
+                    })
+        
+        elif slot_type == "equipment":
+            actions.append({
+                "name": "Снять",
+                "action": lambda: player.inventory.unequip_item(self, player)
+            })
+        
+        # Выбросить можно всегда
+        actions.append({
+            "name": "Выбросить",
+            "action": lambda: player.drop_item_by_reference(self)
+        })
+        
+        return actions

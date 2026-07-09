@@ -19,5 +19,11 @@ AGGRESSIVE_LOOT ={"items": [
         ("limb", "combat_hand_right"),
         ("limb", "speed_leg_left"),
         ("limb", "stabilizer_leg_right"),
+
+        # оружие
+        ("weapon", "pistol"),
+        ("weapon", "magnum"),
+        ("weapon", "sniper_rifle"),
+        ("weapon", "machinegun"),
     ]
 }

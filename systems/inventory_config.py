@@ -21,10 +21,8 @@ INVENTORY_CONFIG = {
     "stats_width": 380,
     "stats_height": 120,
 
+    # ===== СТАТИЧЕСКИЕ СЛОТЫ (всё кроме оружия) =====
     "slot_positions": {
-        "weapon_primary": (380, 120, 100, 220), #позиция по х и у, размер по высоте и широте 
-        "weapon_secondary": (660, 120, 100, 220),
-        "weapon_melee": (500, 280, 140, 60),
         "armor": (500, 120, 140, 140),
 
         "implant_head_1": (500, 120, 80, 80),
@@ -52,12 +50,37 @@ INVENTORY_CONFIG = {
         "limbs_hand_left": (640, 200, 120, 60),
     },
 
+    # ===== ДИНАМИЧЕСКИЕ ЗОНЫ ОРУЖИЯ =====
+    "weapon_slot_zones": {
+        "weapon_left": {
+            "x": 420,
+            "y_top": 60,
+            "y_bottom": 640,     # 120 + 220 (старая высота primary)
+            "slot_width": 60,
+            "slot_height": 60,
+        },
+        "weapon_right": {
+            "x": 660,
+            "y_top": 60,
+            "y_bottom": 640,
+            "slot_width": 60,
+            "slot_height": 60,
+        },
+        "weapon_melee": {
+            "x": 500,
+            "y_top": 280,
+            "y_bottom": 340,
+            "slot_width": 140,
+            "slot_height": 60,
+        },
+    },
+
     "equipment_bg_color": (30, 30, 30),
     "equipment_slot_color": (120, 120, 120),
     "equipment_text_color": (255, 255, 255),
 
     "layers": {
-        "equipment": ["weapon_primary", "weapon_secondary", "weapon_melee", "armor"],
+        "equipment": ["weapon_melee", "armor"],  # weapon_left/right добавляются динамически
         "artifacts": ["art_1", "art_2", "art_3", "art_4"],
         "implants": [
             "implant_head_1", "implant_head_2",

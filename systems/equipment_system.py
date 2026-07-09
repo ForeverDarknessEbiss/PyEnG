@@ -14,30 +14,30 @@ class EquipmentSystem:
     
     def update_slots_from_limbs(self, limb_health_system: "LimbHealthSystem"):
         """
-        Пересоздаёт слоты на основе конечностей.
-        Вызывается при экипировке/смене конечностей.
+        Обновляет ТОЛЬКО слоты оружия на основе конечностей.
+        Не трогает слоты limbs_*, implant_*, art_* и т.д.
         """
-        self.slots.clear()
         slots_info = limb_health_system.get_all_slots_info()
-        # slots_info = {"weapon_left": 3, "weapon_right": 1}
         
+        # Удаляем только старые слоты оружия
+        weapon_slots_to_remove = [sid for sid in self.slots if sid.startswith("weapon_")]
+        for sid in weapon_slots_to_remove:
+            del self.slots[sid]
+        
+        # Создаём новые слоты оружия
         for slot_type, slot_count in slots_info.items():
             for i in range(slot_count):
                 if slot_count > 1:
                     slot_id = f"{slot_type}_{i}"
                 else:
                     slot_id = slot_type
-                # Сохраняем только новые слоты, старые предметы не переносим
-                if slot_id not in self.slots:
-                    self.slots[slot_id] = None
+                self.slots[slot_id] = None
     
     # ===== РАБОТА СО СЛОТАМИ =====
     
     def equip(self, slot_id: str, item) -> bool:
-        """
-        Устанавливает предмет в слот.
-        Возвращает True если успех.
-        """
+        print(f"[EQUIP] trying slot={repr(slot_id)}, in slots={slot_id in self.slots}")
+        print(f"[EQUIP] all slots: {list(self.slots.keys())}")
         if slot_id in self.slots:
             self.slots[slot_id] = item
             return True

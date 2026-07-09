@@ -4,7 +4,7 @@ from systems.inventory_config import INVENTORY_CONFIG
 
 
         # МЕТОД ОТРИСОВКИ ИНВЕНТАРЯ 
-def draw_inventory(screen, inventory, active_equipment_layer=None):
+def draw_inventory(screen, inventory, active_equipment_layer=None, player=None):
     
     config = INVENTORY_CONFIG
     font = pygame.font.SysFont(None, 24)
@@ -89,7 +89,7 @@ def draw_inventory(screen, inventory, active_equipment_layer=None):
         draw_tooltip(screen, hovered_item, config)
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
-    hovered_equipment = check_equipment_hover(mouse_x, mouse_y, active_equipment_layer) if active_equipment_layer else None
+    hovered_equipment = check_equipment_hover(mouse_x, mouse_y, active_equipment_layer, player) if active_equipment_layer else None
     
     # приоритет: если есть ховер на экипировке — возвращаем его
     if hovered_equipment:
@@ -97,56 +97,44 @@ def draw_inventory(screen, inventory, active_equipment_layer=None):
     return hovered_slot, "inventory"
 
 def draw_equipment(screen, player, active_equipment_layer):
-
     config = INVENTORY_CONFIG
-    
     font = pygame.font.SysFont(None, 24)
     hovered_item = None
-    slots = config["layers"][active_equipment_layer]
+    slots = get_visible_slots_for_layer(active_equipment_layer, player)
+    print(f"[UI] slots to draw: {slots}")
     mouse_x, mouse_y = pygame.mouse.get_pos()
+    
     for slot_name in slots:
-        data = config["slot_positions"].get(slot_name)
+        data = get_slot_position(slot_name)
         if not data:
             continue
 
-        # 👇 распаковываем (x, y, width, height)
         x, y, w, h = data
-
         item = player.equipment.slots.get(slot_name)
-
         rect = pygame.Rect(x, y, w, h)
         pygame.draw.rect(screen, config["equipment_slot_color"], rect, 2)
 
         if item:
-            item_rect = pygame.Rect(
-                x + 4,
-                y + 4,
-                w - 8,
-                h - 8
-            )
+            item_rect = pygame.Rect(x + 4, y + 4, w - 8, h - 8)
             pygame.draw.rect(screen, item.color, item_rect)
 
-            # Проверяем ховер
             if rect.collidepoint(mouse_x, mouse_y):
                 hovered_item = item
 
-        # подпись слота (чуть ниже)
         text = font.render(slot_name, True, config["equipment_text_color"])
         screen.blit(text, (x, y + h + 2))
 
     if hovered_item:
         draw_tooltip(screen, hovered_item, config)
 
-def check_equipment_hover(mouse_x, mouse_y, active_layer):
-
-    config = INVENTORY_CONFIG
-    slots = config["layers"][active_layer]
-    positions = config["slot_positions"]
+def check_equipment_hover(mouse_x, mouse_y, active_layer, player=None):
+    slots = get_visible_slots_for_layer(active_layer, player)
 
     for slot_name in slots:
-        if slot_name not in positions:
+        pos = get_slot_position(slot_name)
+        if pos is None:
             continue
-        x, y, w, h = positions[slot_name]
+        x, y, w, h = pos
         rect = pygame.Rect(x, y, w, h)
         if rect.collidepoint(mouse_x, mouse_y):
             return slot_name
@@ -453,3 +441,61 @@ def draw_container_panel(screen, container, config):
         text = font.render(f"• {item}", True, (200, 200, 200))
         screen.blit(text, (panel_x + 10, y_offset))
         y_offset += 25
+
+def get_slot_position(slot_id: str):
+    """Возвращает позицию слота. Динамические слоты вычисляет из зон."""
+    config = INVENTORY_CONFIG
+
+    # Статические слоты
+    if slot_id in config["slot_positions"]:
+        return config["slot_positions"][slot_id]
+
+    # Динамические оружейные слоты
+    zones = config.get("weapon_slot_zones", {})
+    for zone_type, zone in zones.items():
+        if slot_id.startswith(zone_type):
+            if slot_id == zone_type:
+                index = 0
+            else:
+                parts = slot_id.rsplit("_", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    index = int(parts[1])
+                else:
+                    return None
+
+            total_slots = sum(1 for sid in config["layers"]["equipment"] if sid.startswith(zone_type))
+            for sid in get_visible_slots_for_layer("equipment"):
+                if sid.startswith(zone_type):
+                    total_slots = max(total_slots, index + 1)
+
+            zone_height = zone["y_bottom"] - zone["y_top"]
+            usable_height = zone_height - zone["slot_height"]
+
+            if total_slots <= 1:
+                y = zone["y_top"] + usable_height // 2
+            else:
+                step = usable_height // (total_slots - 1)
+                y = zone["y_top"] + step * index
+
+            return (zone["x"], y, zone["slot_width"], zone["slot_height"])
+
+    return None
+
+
+def get_visible_slots_for_layer(active_layer: str, player=None) -> list[str]:
+    """Возвращает слоты слоя + динамические оружейные слоты."""
+    config = INVENTORY_CONFIG
+    slots = list(config["layers"].get(active_layer, []))
+
+    print(f"[UI] visible slots for {active_layer}: {slots}")
+    
+    if active_layer == "equipment" and player:
+        if hasattr(player, 'limb_health_system'):
+            slots_info = player.limb_health_system.get_all_slots_info()
+            for slot_type, slot_count in slots_info.items():
+                for i in range(slot_count):
+                    slot_id = f"{slot_type}_{i}" if slot_count > 1 else slot_type
+                    if slot_id not in slots:
+                        slots.append(slot_id)
+
+    return slots

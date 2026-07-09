@@ -228,7 +228,7 @@ def main():
         # =========================
         if mouse_buttons[2]:
             if ui_layer == "game":
-                combat_system.try_attack(player)
+                combat_system.try_attack(player, camera)
 
             # 🎮 джойстик
             # joystick.handle_event(event)
@@ -277,7 +277,7 @@ def main():
         hitbox_system.draw(screen, camera) # УДАЛИТЬ ВМЕСТЕ С МЕТОДОМ ПО СООТВЕТСТВУЮЩЕЙ ДЕРИКТОРИИ рисует хитбокс удара
         loot_system.draw(screen, camera, player)#  рисуем лут
         interactive_manager.draw(screen, camera)
-        weapon_carousel.draw(screen, player)
+        # weapon_carousel.draw(screen, player)
         radial_menu.draw(screen)
         # 🆕 Отрисовка миникарты (радар)
         if hasattr(player, 'implant_manager'):
@@ -287,7 +287,7 @@ def main():
         # UI (поверх всего)
         if player.inventory.is_open:
 
-            hovered_slot, hovered_type = draw_inventory(screen, player.inventory, active_equipment_layer)
+            hovered_slot, hovered_type = draw_inventory(screen, player.inventory, active_equipment_layer, player)
             equipment_tab_buttons = draw_equipment_tabs(screen, active_equipment_layer)
             draw_equipment(screen, player, active_equipment_layer)
             draw_context_menu(screen, player.inventory)

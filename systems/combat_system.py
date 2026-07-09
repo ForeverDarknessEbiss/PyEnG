@@ -316,28 +316,35 @@ class CombatSystem:
         if self.attack_timer > 0:
             self.attack_timer -= delta_time
 
-    def try_attack(self, player):
+    def try_attack(self, player, camera=None):
         if self.attack_timer > 0:
             return
 
-        weapon = player.weapon
-        has_weapon = weapon is not None
-
-        if not has_weapon and hasattr(player, 'implant_manager'):
-            for uid, data in player.implant_manager.active_mechanics.items():
-                if data["key"] == "energy_blades"and data["instance"].enabled:
-                    data["instance"].use(attack_vector=self.attack_vector,damage_text_system=self.damage_text_system)
-                    self.attack_timer = 0.5
-                    return
-
-
-        # ========== ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ==========
-        weapon = player.weapon
-
-        # если оружия нет — бьём дефолтной атакой
-        if weapon is None:
+        # Определяем сторону
+        if camera and hasattr(player, 'get_cursor_side'):
+            mouse_pos = pygame.mouse.get_pos()
+            side = player.get_cursor_side(mouse_pos, camera)
+        else:
+            side = None
+        
+        # Если курсор в мёртвой зоне — не стреляем
+        if side is None:
+            return
+        
+        # Получаем всё оружие на борту
+        weapons = player.get_weapons_on_side(side)
+        
+        # Если нет оружия — проверяем импланты, кулаки
+        if not weapons:
+            if hasattr(player, 'implant_manager'):
+                for uid, data in player.implant_manager.active_mechanics.items():
+                    if data["key"] == "energy_blades" and data["instance"].enabled:
+                        data["instance"].use(attack_vector=self.attack_vector, damage_text_system=self.damage_text_system)
+                        self.attack_timer = 0.5
+                        return
+            
+            # Кулаки (дефолтная атака)
             from loot.weapons.weapon import Weapon
-
             fists = Weapon(
                 name="fists",
                 damage={"physical": 5},
@@ -346,27 +353,22 @@ class CombatSystem:
                 area=(30, 30),
                 weapon_type="melee"
             )
-
             self._melee_attack(player, fists)
             self.attack_timer = 1 / fists.attack_speed
             return
 
-        # Получаем бонус скорости атаки
+        # Стреляем из каждого орудия на борту
         combat_stats = player.get_combat_stats()
-        attack_speed_bonus = 0
-        
-        if weapon.weapon_type == "melee":
-            attack_speed_bonus = combat_stats.get("melee_speed", 0)
-        elif weapon.weapon_type == "ranged":
-            # Для дальнего боя можно добавить свой бонус
-            pass        
-
-        # Применяем бонус к скорости атаки
-        final_attack_speed = weapon.attack_speed * (1 + attack_speed_bonus / 100)
-
-        weapon.attack(player, self)
-
-        self.attack_timer = 1 / final_attack_speed
+        for weapon in weapons:
+            attack_speed_bonus = 0
+            if weapon.weapon_type == "melee":
+                attack_speed_bonus = combat_stats.get("melee_speed", 0)
+            
+            final_attack_speed = weapon.attack_speed * (1 + attack_speed_bonus / 100)
+            weapon.attack(player, self)
+            
+            # Кулдаун ставим по самому быстрому оружию (или по последнему — реши сам)
+            self.attack_timer = 1 / final_attack_speed
 
 
     def _spawn_impact_effect(self, point):

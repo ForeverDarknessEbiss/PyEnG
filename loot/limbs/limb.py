@@ -124,25 +124,42 @@ class Limb:
         # Снимаем старую конечность, если есть
         old_limb = player.equipment.slots.get(target_slot)
         if old_limb and old_limb is not self:
-            # Убираем старую из слотов и здоровья
+            # Снимаем оружие из всех слотов старой конечности
+            for weapon_slot in list(player.equipment.slots.keys()):
+                if weapon_slot.startswith("weapon_"):
+                    weapon = player.equipment.slots.get(weapon_slot)
+                    if weapon:
+                        player.inventory.add_item(weapon, 1)
+                        player.equipment.slots[weapon_slot] = None
+            
             player.equipment.slots[target_slot] = None
             player.limb_health_system.remove_limb(old_limb.limb_id)
-            # Возвращаем старую в инвентарь
             player.inventory.add_item(old_limb, 1)
         
         # Экипируем новую
         player.equipment.slots[target_slot] = self
         player.limb_health_system.add_limb(self)
         
+        # Обновляем слоты оружия (могло измениться количество)
+        player.equipment.update_slots_from_limbs(player.limb_health_system)
+        
         # Удаляем новую из инвентаря
         for i, slot in enumerate(player.inventory.slots):
             if slot and slot.item is self:
                 player.inventory.slots[i] = None
                 break
-    
+
     def _unequip_to_inventory(self, player, slot_name):
         """Снимает конечность и кладёт в инвентарь."""
         if player.inventory.has_free_space_for_item(self):
+            # Снимаем оружие из слотов конечности
+            for weapon_slot in list(player.equipment.slots.keys()):
+                if weapon_slot.startswith("weapon_"):
+                    weapon = player.equipment.slots.get(weapon_slot)
+                    if weapon:
+                        player.inventory.add_item(weapon, 1)
+                        player.equipment.slots[weapon_slot] = None
+            
             player.equipment.slots[slot_name] = None
             player.limb_health_system.remove_limb(self.limb_id)
             player.equipment.update_slots_from_limbs(player.limb_health_system)

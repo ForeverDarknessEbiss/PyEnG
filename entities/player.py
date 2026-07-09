@@ -42,7 +42,11 @@ class Player(Entity):
             "electric_defense": 0,
             "fire_defense": 0,
         }
-        
+        # В __init__:
+        self.weapon_side_map = {
+            "weapon_left": "left",    # все weapon_left_* → левый борт
+            "weapon_right": "right",  # все weapon_right_* → правый борт
+        }
         self.health = 0
         self.max_health = 0
         self.radial_menu = None    
@@ -65,13 +69,12 @@ class Player(Entity):
         db = LimbsDatabase()
         factory = LimbFactory(db)
         
-        # ID конечностей из БД (подгони под свои)
         default_limb_ids = {
-            "limbs_head": 1,        # ID головы в БД
-            "limbs_hand_left": 2,   # ID левой руки
-            "limbs_hand_right": 3,  # ID правой руки
-            "limbs_leg_left": 4,    # ID левой ноги
-            "limbs_leg_right": 5,   # ID правой ноги
+            "limbs_head": 1,
+            "limbs_hand_left": 2,
+            "limbs_hand_right": 5,
+            "limbs_leg_left": 8,
+            "limbs_leg_right": 9,
         }
         
         for slot, limb_id in default_limb_ids.items():
@@ -79,8 +82,6 @@ class Player(Entity):
             if limb:
                 self.limb_health_system.add_limb(limb)
                 self.equipment.slots[slot] = limb
-        
-        db.close()
 
     @property
     def weapon(self):
@@ -116,6 +117,58 @@ class Player(Entity):
         """
         return self.x, self.y
 
+
+    def get_weapons_on_side(self, side: str) -> list:
+        weapons = []
+        for slot_id, item in self.equipment.slots.items():
+            if item is None:
+                continue
+            for prefix, slot_side in self.weapon_side_map.items():
+                if slot_id.startswith(prefix):
+                    if slot_side == side:
+                        weapons.append(item)
+                        print(f"[SIDE] {side}: {slot_id} -> {item.name}")
+                    break
+        print(f"[SIDE] total weapons on {side}: {len(weapons)}")
+        return weapons
+
+
+    def get_cursor_side(self, mouse_pos: tuple, camera) -> str | None:
+        """
+        Определяет, с какой стороны корабля находится курсор.
+        Возвращает 'left', 'right' или None (мёртвая зона нос/корма).
+        """
+        import math
+        
+        ship_x, ship_y = self.x, self.y
+        
+        mouse_world_x = mouse_pos[0] + camera.x
+        mouse_world_y = mouse_pos[1] + camera.y
+        
+        dx = mouse_world_x - ship_x
+        dy = mouse_world_y - ship_y
+        
+        nose_dx, nose_dy = self.last_dx, self.last_dy
+        if nose_dx == 0 and nose_dy == 0:
+            nose_dx, nose_dy = 0, -1
+        
+        cross = nose_dx * dy - nose_dy * dx
+        dot = nose_dx * dx + nose_dy * dy
+        
+        dist = math.sqrt(dx * dx + dy * dy)
+        if dist == 0:
+            return None
+        
+        # Мёртвая зона: ±30° от носа и кормы
+        if abs(dot) / dist > 0.5:
+            return None
+        
+        if cross > 0:
+            return "right"
+        elif cross < 0:
+            return "left"
+        
+        return None
 
     def update(self, game_map, joystick, delta_time):
         """

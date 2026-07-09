@@ -35,5 +35,6 @@ HEAVY_LOOT = {
         # редкое оружие
         ("weapon", "magnum"),
         ("weapon", "sniper_rifle"),
+        
     ]
 }

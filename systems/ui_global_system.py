@@ -15,6 +15,8 @@ class WeaponCarousel:
         # Отступ между слотами
         self.gap = 20
 
+        self.tooltip_open = False
+
         # Настройки HP бара
         self.hp_x = 560
         self.hp_y = 820
@@ -213,11 +215,13 @@ class WeaponCarousel:
     
     def draw_hp_bar(self, screen, player):
         """Отрисовка полоски здоровья"""
-        if player.max_health <= 0:
+
+        total_hp = player.limb_health_system.get_total_hp()
+        max_hp = player.limb_health_system.get_total_max_hp()
+        if max_hp <= 0:
             return
-        
-        # Процент здоровья
-        percent = player.health / player.max_health
+        percent = total_hp / max_hp
+
         current_width = int(self.hp_width * percent)
         
         # Полоска
@@ -225,7 +229,7 @@ class WeaponCarousel:
                         (self.hp_x, self.hp_y, current_width, self.hp_height))
         
         # Текст (здоровье)
-        text = f"{int(player.health)}/{int(player.max_health)}"
+        text = f"{int(total_hp)}/{int(max_hp)}"
         text_surf = self.font.render(text, True, self.font_color)
         text_rect = text_surf.get_rect(center=(self.hp_x + self.hp_width // 2, 
                                                 self.hp_y -10))
